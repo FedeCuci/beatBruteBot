@@ -4,7 +4,7 @@ A simple automation tool to test your robot in different maps and hopefully beat
 
 ## Overview
 
-<img src="/Users/libin/Desktop/Screenshot 2023-11-22 at 13.40.47.png" alt="Screenshot 2023-11-22 at 13.40.47" style="zoom:33%;" />
+<img src="https://github.com/Celqaz/beatBruteBot/blob/main/img/overview.png" alt="beatBruteBot Overview" style="zoom:33%;" />
 
 
 
