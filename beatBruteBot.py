@@ -4,19 +4,21 @@ from Bot import Bot
 from Game import Game
 import importlib
 import os
+import sys
+from typing import List, Dict, Union, Optional
 
 DEFENDER = 'BruteBot'
 # Change this to your robot name
-CHALLENGER = 'Bot010101'
+CHALLENGER = 'Bot4331261'
+    
 
-
-
-def readTestMaps(levels):
+def readTestMaps(levels: List[int], debug: bool, maps=[]):
     """
     Read all the maps in the graded_maps folder for certain levels range
     :param levels: list of levels
     :return: mapInfoDict: a dictionary of map information
     """
+
     mapInfoDict = {}
     for level in levels:
         mapInfoDict[level] = []
@@ -24,6 +26,9 @@ def readTestMaps(levels):
             # only read csv files
             if filename.endswith('.csv'):
                 parameters = filename.split('_')
+                # If in debug mode, do not append solved maps
+                if debug and f"graded_maps/{level}/{filename}" not in maps: 
+                    continue
                 mapInfoDict[level].append(
                     {
                         "mapName": f"graded_maps/{level}/{filename}",
@@ -40,8 +45,7 @@ def readTestMaps(levels):
                 )
     return mapInfoDict
 
-
-def playGame(settings, botName):
+def playGame(settings, botName: str, debug: bool) -> Union[str, int]:
     """
     Play the game with the given settings and selected bot
     :param settings: maps settings
@@ -50,7 +54,7 @@ def playGame(settings, botName):
     """
     MAX_STEPS = settings["nrCols"] * settings["nrRows"] * 2
     LATENCY = 0
-    VISUALS = False
+    VISUALS = True if debug and botName != 'BruteBot' else False
     CLS = True
 
     module = importlib.import_module(botName)
@@ -63,39 +67,41 @@ def playGame(settings, botName):
     game = Game(bot, myMap, MAX_STEPS, LATENCY, VISUALS, CLS)
 
     try:
-        res = game.play()
+        res = game.play(debug)
+
         if res == 'Game Over':
             return 'Out of Energy.'
         else:
             return res
         return
-    except Exception:
-        return 'Running Error.'
+    except Exception as e:
+        return f'Runtime Error:\n {e}' # Add a more specific error
 
 
-def transformLevelRange(levelRange):
+def transformLevelRange(maps: List[int]) -> List[int]:
     """
     Transform the level range to a list of levels
-    :param levelRange:
+    :param maps:
     :return: list of levels
     """
     """
-    :param levelRange: 
+    :param maps: 
     :return: 
     """
-    if len(levelRange) == 1:
-        return [levelRange[0]]
-    if len(levelRange) == 2:
-        return list(range(levelRange[0], levelRange[1] + 1))
+    if len(maps) == 1:
+        return [maps[0]]
+    if len(maps) == 2:
+        return list(range(maps[0], maps[1] + 1))
 
 
-def referee(scoreBoard, mapName):
+def referee(scoreBoard: Dict[str, Union[int, str]], mapName: str, debug: bool) -> Optional[str]:
     """
     Judge and print the game results.
     :param scoreBoard: the score of each robot
     :param mapNAme:
     :return: none
     """
+
     if len(scoreBoard) == 2:
         msg = {
             'CHALLENGER_WIN': f'✅ Passed!  '
@@ -106,6 +112,7 @@ def referee(scoreBoard, mapName):
                                f'\n\t{DEFENDER}: {scoreBoard[DEFENDER]}.'
                                f'\n\tMap name: {mapName}'
         }
+
         # print('scoreBoard:', scoreBoard)
         if isinstance(scoreBoard[DEFENDER], int) and not isinstance(scoreBoard[CHALLENGER], int):
             print(msg['CHALLENGER_LOSE'])
@@ -124,37 +131,64 @@ def referee(scoreBoard, mapName):
         else:
             print(f'❌ Failed. Score: {scoreBoard[0]}'
                   f'\n\tMap name: {mapName}')
+            if not debug:
+                return mapName
+    return
 
 
-def beatBruteBot(levelRange=[6, 7]):
-    mapInfoDict = readTestMaps(levels=transformLevelRange(levelRange))
+def beatBruteBot(maps: Union[List[int], List[str]] = [6, 7], debug: bool = False) -> None:
+    
+    failedMaps = []
 
-    for level, maps in mapInfoDict.items():
-        print('\n🔒 Level:', level, '\n')
-        for settings in maps:
+    # Check if all maps need to be run or only failed maps
+    if all(isinstance(x, int) for x in maps):
+        mapInfoDict = readTestMaps(transformLevelRange(maps), debug)
+    else:
+        mapInfoDict = readTestMaps([6,7,8,9,10], debug, maps)
+
+    for level, map in mapInfoDict.items():
+        if not debug:
+            print('\n🔒 Level:', level, '\n')
+        for settings in map:
             if level < 8:
                 scoreBoard = {
                     DEFENDER: 0,
                     CHALLENGER: 0
                 }
+
                 for robot in [DEFENDER, CHALLENGER]:
                     # print('currentMap:',settings['mapName'])
-                    gameResults = playGame(settings, robot)
+                    gameResults = playGame(settings, robot, debug)
                     totalEnergy = settings['nrCols'] * settings['nrRows'] * 2
                     totalStains = settings['nrStains'] * settings['sizeStains']
                     scoreBoard[robot] = gameResults
-                referee(scoreBoard, settings['mapName'])
+                failedMap = referee(scoreBoard, settings['mapName'], debug)
+                if failedMap:
+                    failedMaps.append(failedMap)
+
             elif level >= 8:
-                scoreBoard = [playGame(settings, CHALLENGER)]
-                referee(scoreBoard, settings['mapName'])
+                scoreBoard = [playGame(settings, CHALLENGER, debug)]
+                failedMap = referee(scoreBoard, settings['mapName'], debug)
+                if failedMap: # Check if there were failed maps
+                    failedMaps.append(failedMap)
+    
+    if failedMaps:
+        debug = input('\nDo you want to debug the failed maps? (y/n)')
+        if debug.lower() in ('y', 'yes'):
+            # Clear screen for Linux or Windows
+            if os.name == 'nt':
+                os.system('cls')
+            else:
+                os.system('clear')
+            beatBruteBot(failedMaps, True)
 
 
 if __name__ == "__main__":
+    
     # By default, it will test all the level 6 and level 7 maps
-    beatBruteBot()
+    # beatBruteBot()
 
     # To test a specific level:
     # beatBruteBot([8])
-
     # To test all levels:
-    # beatBruteBot([6,10])
+    beatBruteBot([6,10])
