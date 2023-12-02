@@ -76,7 +76,7 @@ def play(self):
 to:
 
 ```python
-def play(self):
+def play(self, debug):
   	...
 		if self.energy<=0:
 			# print("game over, " +botName+  " ran out of energy")
@@ -84,6 +84,48 @@ def play(self):
 		elif self.map.remainingStains<=0:
 			# print(botName + " finished the map with a score of ", self.energy)
 			return self.energy
+```
+
+and add the following lines right under `time.sleep(self.latency)` on line 27:
+
+```python
+if debug:
+	next = input()
+	if next:
+		return 'Next'
+```
+
+### Edit `Map.py`
+Lastly, in `Map.py`, add `self.overlap = [str(i) for i in range(10)]` on line 19, right below `self.botPosition = self.checkpoint[:] #bot always starts at the checkpoint` on line 18.
+
+Then, change the signature of the `moveRobot()` method on line 58, from:
+
+```python
+def moveRobot(self, move)
+```
+
+to:
+
+```python
+def moveRobot(self, move, debug=False)
+```
+
+and change the remaining lines in `moveRobot(self, move, debug=False)` to:
+
+```python
+self.currentSign = self.map[self.botPosition[0]][self.botPosition[1]]
+self.map[self.botPosition[0]][self.botPosition[1]] = 'B'
+if currentPosition == self.checkpoint:
+	self.map[currentPosition[0]][currentPosition[1]] = '1'
+else:
+	if self.currentSign in self.overlap:
+		if self.currentSign == '9' or self.currentSign == 'S':
+			self.overlap.append('S')
+			self.map[currentPosition[0]][currentPosition[1]] = 'S'
+		else:
+			self.map[currentPosition[0]][currentPosition[1]] = self.overlap[self.overlap.index(self.currentSign) + 1]
+	else:
+		self.map[currentPosition[0]][currentPosition[1]] = '1'
 ```
 
 
