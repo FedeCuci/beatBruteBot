@@ -96,7 +96,17 @@ if debug:
 ```
 
 ### Edit `Map.py`
-Lastly, in `Map.py`, add `self.overlap = [str(i) for i in range(10)]` on line 19, right below `self.botPosition = self.checkpoint[:] #bot always starts at the checkpoint` on line 18.
+Lastly, in `Map.py`, add:
+
+```python
+self.overlap = [str(i) for i in range(10)]
+```
+
+on line 19, right below:
+
+```python
+self.botPosition = self.checkpoint[:] #bot always starts at the checkpoint` on line 18.
+```
 
 Then, change the signature of the `moveRobot()` method on line 58, from:
 
@@ -110,7 +120,16 @@ to:
 def moveRobot(self, move, debug=False)
 ```
 
-and change the remaining lines in `moveRobot(self, move, debug=False)` to:
+and change the lines after:
+
+```python
+elif move == 'right':
+	self.botPosition[1] = self.botPosition[1]+1
+	if self.map[self.botPosition[0]][self.botPosition[1]] == '@':
+		self.remainingStains -=1
+```
+
+to the ones below, but make sure to stay within the `moveRobot()` method:
 
 ```python
 self.currentSign = self.map[self.botPosition[0]][self.botPosition[1]]
