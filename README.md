@@ -100,6 +100,7 @@ Lastly, in `Map.py`, add:
 
 ```python
 self.overlap = [str(i) for i in range(10)]
+self.overlap.append('S')
 ```
 
 on line 19, right below:
@@ -139,7 +140,6 @@ if currentPosition == self.checkpoint:
 else:
 	if self.currentSign in self.overlap:
 		if self.currentSign == '9' or self.currentSign == 'S':
-			self.overlap.append('S')
 			self.map[currentPosition[0]][currentPosition[1]] = 'S'
 		else:
 			self.map[currentPosition[0]][currentPosition[1]] = self.overlap[self.overlap.index(self.currentSign) + 1]
